@@ -1,0 +1,79 @@
+= scala-getoptions
+David Gamba
+
+Scala option parser based on Perl's Getopt::Long.
+
+== Usage
+
+[source,scala]
+----
+def main(args: Array[String]) {
+  val (options, remaining) = OptionParser.getOptions(args,
+    Map(
+      "-h"              -> print_synopsis(),
+      "--help"          -> print_man(),
+      "--version"       -> print_version(),
+      "-f|--flag"       -> 'flag,
+      "--string=s"      -> 'option_with_string_value,
+      "--int=i"         -> 'option_with_int_value,
+    ))
+
+  if (options isDefinedAt 'flag)
+    do_something()
+  if (options isDefinedAt 'option_with_string_value)
+    do_something_else(options.get('option_with_string_value).getOrElse(""))
+----
+
+== Description
+
+It will take an `Array[String]` and a `Map[String, Any]` and it will return a `Map[Symbol,Any]` of the given arguments and an `Array[String]` of the remaining arguments.
+
+== Input / Output
+
+Arguments::
+1. `Array[String]`.
+2. `Map[String, Any]`, where `Any` can be `Symbol` or a 'method call' or 'function'.
+
+Returns::
+1. `Map[Symbol,Any]` where `Any` can be a `String` or `Integer` (And eventually `Map` and `Array`, see <<_roadmap>>).
+2. `Array[String]`.
+
+== Features
+
+* Supports passing `--` to stop parsing arguments (everything after will be left in the `remaining` `Array[String]`).
+
+* Multiple definitions for the same option separated by `|`. e.g. `-f|--flag|--longer-version-of-flag`.
+
+* Defining what kind of argument you are passing. Currently supports `=s` to pass strings and `=i` to pass integers.
+
+* Supports command line options with `=`. e.g. You can use `--string=mystring` and `--string mystring`.
+
+== Dependencies
+
+  libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.7"
+
+== How to install it
+
+TODO
+
+== Roadmap
+
+* Support bundling
+
+  -l -a -c  => -lac
+
+* Support passing values after the short option character
+
+  -i 24  => -i24
+
+* Support array arguments
+
+  --library lib/stdlib --library lib/extlib
+  "--library=s@"
+
+* Support hash (Map) arguments
+
+  --define os=linux --define vendor=redhat
+  "--define=s%"
+
+* All other Perl's Getopt::Long goodies!
