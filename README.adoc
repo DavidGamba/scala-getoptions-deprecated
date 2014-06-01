@@ -35,7 +35,7 @@ Arguments::
 2. `Map[String, Any]`, where `Any` can be `Symbol` or a 'method call' or 'function'.
 
 Returns::
-1. `Map[Symbol,Any]` where `Any` can be a `String` or `Integer` (And eventually `Map` and `Array`, see <<_roadmap>>).
+1. `Map[Symbol,Any]` where `Any` can be a `String`, `Integer` or `Double` (And eventually `Map` and `Array`, see <<_roadmap>>).
 2. `Array[String]`.
 
 == Features
