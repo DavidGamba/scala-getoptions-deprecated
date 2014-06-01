@@ -53,6 +53,9 @@ object OptionParser {
       val ret = if (key.matches(".*=i$")) {
         logger.trace("toInt")
         value.toInt
+      } else if (key.matches(".*=f$")) {
+        logger.trace("toDouble")
+        value.toDouble
       } else if (key.matches(".*=s$")) {
         logger.trace("string")
         value

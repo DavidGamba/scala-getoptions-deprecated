@@ -67,6 +67,22 @@ class OptionParserTest extends FlatSpec with Matchers {
                                 'version -> 2 ))
   }
 
+  it should "match double" in {
+    val args = Array[String]("hello", "--help=1.5", "-h", "3.2", "--version", "2.7543", "world")
+
+    val (options, remaining) = OptionParser.getOptions(args,
+      Map(
+        "--help=f"          -> 'man,
+        "-h=f"              -> 'help,
+        "--version=f"       -> 'version
+      ))
+    remaining should equal ( Array("hello", "world") )
+    options should not be empty
+    options should equal ( Map( 'man -> 1.5,
+                                'help -> 3.2,
+                                'version -> 2.7543 ))
+  }
+
   it should "match all previous things at the same time" in {
     val args = Array[String]("hello", "world")
 
@@ -86,7 +102,6 @@ class OptionParserTest extends FlatSpec with Matchers {
         "--int=i"         -> 'int,
         "--function"      -> println("function")
       ))
-    remaining(0) should be ("hello")
-    remaining(1) should be ("world")
+    remaining should equal ( Array("hello", "world") )
   }
 }

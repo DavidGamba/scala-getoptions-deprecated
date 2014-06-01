@@ -44,11 +44,13 @@ Returns::
 
 * Multiple definitions for the same option separated by `|`. e.g. `-f|--flag|--longer-version-of-flag`.
 
-* Defining what kind of argument you are passing. Currently supports `=s` to pass strings and `=i` to pass integers.
+* Defining what kind of argument you are passing. Currently supports `=s` to pass strings, `=i` to pass integers and `=f` to pass Double values.
 
 * Supports command line options with `=`. e.g. You can use `--string=mystring` and `--string mystring`.
 
 == Dependencies
+
+SLF4J to add logging::
 
   libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.7"
 
@@ -76,4 +78,4 @@ TODO
   --define os=linux --define vendor=redhat
   "--define=s%"
 
-* All other Perl's Getopt::Long goodies!
+* All other Perl's Getopt::Long goodies that seem reasonable to add!
