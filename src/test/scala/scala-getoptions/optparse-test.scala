@@ -13,10 +13,13 @@ class OptionParserTest extends FlatSpec with Matchers {
 
   it should "warn on unknown option entries and ignore them" in {
     val args = Array[String]("hello", "world", "--unknown")
-
-    val (options, remaining) = OptionParser.getOptions(args, Map())
-    remaining should equal ( Array("hello", "world") )
-    options shouldBe empty
+    val stream = new java.io.ByteArrayOutputStream()
+    Console.withErr(stream) {
+      val (options, remaining) = OptionParser.getOptions(args, Map())
+      remaining should equal ( Array("hello", "world") )
+      options shouldBe empty
+    }
+    stream.toString should equal ("Unknown option: --unknown\n")
   }
 
   it should "match flags" in {
@@ -83,25 +86,71 @@ class OptionParserTest extends FlatSpec with Matchers {
                                 'version -> 2.7543 ))
   }
 
-  it should "match all previous things at the same time" in {
-    val args = Array[String]("hello", "world")
+  // TODO
+  ignore should "fail if option with value doesn't have a value" in {
+    val args = Array[String]("hello", "--color")
 
     val (options, remaining) = OptionParser.getOptions(args,
       Map(
-        "--help"          -> 'man,
-        "-h"              -> 'help,
-        "--version"       -> 'version,
-        "-c|--case"       -> 'case,
-        "-f"              -> 'type_file,
-        "-d"              -> 'type_dir,
-        "--hidden"        -> 'hidden,
-        "--vcs"           -> 'vcs,
-        "--full|fullpath" -> 'fullpath,
-        "--type=s"        -> 'type,
-        "--color=s"       -> 'color,
-        "--int=i"         -> 'int,
-        "--function"      -> println("function")
+        "--color=s"       -> 'color
       ))
-    remaining should equal ( Array("hello", "world") )
+    remaining should equal ( Array("hello") )
+  }
+
+  it should "Allow passing function arguments instead of symbols" in {
+    val args = Array[String]("hello", "--function", "--anon")
+    def test_function() = () => println("print")
+    val stream = new java.io.ByteArrayOutputStream()
+    Console.withOut(stream) {
+      val (options, remaining) = OptionParser.getOptions(args,
+        Map(
+          "--function=p" -> test_function,
+          "--anon=p"     -> { () => println("another") }
+        ))
+      remaining should equal ( Array("hello") )
+    }
+    stream.toString should equal ("print\nanother\n")
+  }
+
+  it should "Not call function if not passed on cmdline" in {
+    val args = Array[String]("hello")
+    def test_function() = () => println("print")
+    val stream = new java.io.ByteArrayOutputStream()
+    Console.withOut(stream) {
+      val (options, remaining) = OptionParser.getOptions(args,
+        Map(
+          "--function=p" -> test_function,
+          "--anon=p"     -> { () => println("another") }
+        ))
+      remaining should equal ( Array("hello") )
+    }
+    stream.toString should equal ("")
+  }
+
+  ignore should "match all previous things at the same time" in {
+    val args = Array[String]("hello", "world")
+
+    val stream = new java.io.ByteArrayOutputStream()
+    Console.withOut(stream) {
+      val (options, remaining) = OptionParser.getOptions(args,
+        Map(
+          "--help"          -> 'man,
+          "-h"              -> 'help,
+          "--version"       -> 'version,
+          "-c|--case"       -> 'case,
+          "-f"              -> 'type_file,
+          "-d"              -> 'type_dir,
+          "--hidden"        -> 'hidden,
+          "--vcs"           -> 'vcs,
+          "--full|fullpath" -> 'fullpath,
+          "--type=s"        -> 'type,
+          "--color=s"       -> 'color,
+          "--int=i"         -> 'int,
+          "--print=p"         -> { () => println("print") },
+          "--function=p"      -> { () => println("function") }
+        ))
+      remaining should equal ( Array("hello", "world") )
+    }
+    stream.toString should equal ("print\n")
   }
 }

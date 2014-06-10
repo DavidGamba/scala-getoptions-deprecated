@@ -28,6 +28,11 @@ object OptionParser {
       logger.trace(s"match_get: $opt -> $s")
       s.asInstanceOf[Option[Symbol]]
     }
+    def match_get_function(opt: String): () => Unit = {
+      val s = m.get(m.match_key(opt))
+      logger.trace(s"match_get_function: $opt -> $s")
+      s.get.asInstanceOf[() => Unit]
+    }
     def match_apply(opt: String): Symbol = {
       val s = m(m.match_key(opt))
       logger.trace(s"match_apply: $opt -> $s")
@@ -38,6 +43,13 @@ object OptionParser {
     def is_option(opt: String, check: Boolean = true): Boolean = {
       val ret = check && m.match_key(opt).matches("^-.*")
       logger.trace(s"is_option: $opt -> $ret")
+      ret
+    }
+
+    // If the option definition has p for procedure it is a function
+    def is_function(opt: String): Boolean = {
+      val ret = m.match_key(opt).matches(".*=p$")
+      logger.trace(s"is_function: $opt -> $ret")
       ret
     }
 
@@ -70,9 +82,9 @@ object OptionParser {
                            option_map: OptionMapBuilder,
                            options: OptionMap = Map[Symbol, String](),
                            skip: Array[String] = Array[String]()): Tuple2[OptionMap, Array[String]] = {
-    logger.debug(s"""[parseOptions] args: $args""")
-    logger.debug(s"""[parseOptions] options:   $options""")
-    logger.debug(s"""[parseOptions] skip:      ${skip.mkString(",")}""")
+    logger.trace(s"""[parseOptions] args:    $args""")
+    logger.trace(s"""[parseOptions] options: $options""")
+    logger.trace(s"""[parseOptions] skip:    ${skip.mkString(",")}""")
     args match {
       // Empty list
       case Nil => Tuple2(options, skip)
@@ -83,41 +95,65 @@ object OptionParser {
       // Options with values after "=". e.g --opt=value
       case opt :: tail if option_map.is_option(opt) &&
                           !option_map.is_flag(opt) &&
+                          !option_map.is_function(opt) &&
                           option_map.match_get(opt) != None &&
-                          opt.contains("=")
-                          =>
+                          opt.contains("=") => {
+        logger.debug(s"Argument $opt maps to an option with value.")
         parseOptions(tail, option_map,
           skip = skip,
           options = options ++ Map(option_map.match_apply(opt) -> option_map.cast_value(opt, opt.split("=")(1))))
+      }
 
       // Flags
-      case opt :: tail if option_map.is_option(opt) && option_map.is_flag(opt) && option_map.match_get(opt) != None =>
+      case opt :: tail if option_map.is_option(opt) &&
+                          option_map.is_flag(opt) &&
+                          option_map.match_get(opt) != None => {
+        logger.debug(s"Argument $opt maps to a flag.")
         parseOptions(tail, option_map,
           skip = skip,
           options = options ++ Map(option_map.match_apply(opt) -> true))
+      }
+
+      // Options with functions
+      case opt :: tail if option_map.is_option(opt) &&
+                          option_map.is_function(opt) &&
+                          option_map.match_key(opt) != "" => {
+        logger.debug(s"Argument $opt maps to a function call.")
+        option_map.match_get_function(opt)()
+        parseOptions(tail, option_map,
+          skip = skip,
+          options = options)
+      }
 
       // Options with values
-      case opt :: value :: tail if option_map.is_option(opt) && !option_map.is_flag(opt) && option_map.match_get(opt) != None =>
+      case opt :: value :: tail if option_map.is_option(opt) &&
+                                   !option_map.is_flag(opt) &&
+                                   option_map.match_get(opt) != None => {
+        logger.debug(s"Argument $opt maps to an option with value.")
         parseOptions(tail, option_map,
           skip = skip,
           options = options ++ Map(option_map.match_apply(opt) -> option_map.cast_value(opt, value)))
+      }
 
       // Warn on unknown options and ignore them
       case opt :: tail if !option_map.is_option(opt) && opt.startsWith("-") => {
+        logger.debug(s"Argument $opt maps to an unknown option.")
         if (opt.contains("="))
-          System.err.println(s"""Unknown option: ${opt.split("=")(0)}""")
+          Console.err.println(s"""Unknown option: ${opt.split("=")(0)}""")
         else
-          System.err.println(s"Unknown option: $opt")
+          Console.err.println(s"Unknown option: $opt")
         parseOptions(tail, option_map,
           options = options,
           skip = skip)
       }
 
       // Skip extra arguments
-      case opt :: tail if !option_map.is_option(opt) =>
+      case opt :: tail if !option_map.is_option(opt) => {
+        logger.debug(s"Argument $opt is not an option.")
         parseOptions(tail, option_map,
           options = options,
           skip = skip :+ opt)
+      }
     }
   }
 }
