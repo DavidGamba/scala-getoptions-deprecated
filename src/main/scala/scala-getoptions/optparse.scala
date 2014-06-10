@@ -135,6 +135,17 @@ object OptionParser {
           options = options ++ Map(option_map.match_apply(opt) -> option_map.cast_value(opt, value)))
       }
 
+      // Options with missing values
+      case opt :: tail if option_map.is_option(opt) &&
+                          !option_map.is_flag(opt) &&
+                          option_map.match_get(opt) != None => {
+        logger.debug(s"Argument $opt maps to an option with missing value.")
+        Console.err.println(s"Option $opt requires an argument")
+        parseOptions(tail, option_map,
+          skip = skip,
+          options = options)
+      }
+
       // Warn on unknown options and ignore them
       case opt :: tail if !option_map.is_option(opt) && opt.startsWith("-") => {
         logger.debug(s"Argument $opt maps to an unknown option.")

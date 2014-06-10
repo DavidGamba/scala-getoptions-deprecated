@@ -86,15 +86,32 @@ class OptionParserTest extends FlatSpec with Matchers {
                                 'version -> 2.7543 ))
   }
 
-  // TODO
-  ignore should "fail if option with value doesn't have a value" in {
-    val args = Array[String]("hello", "--color")
+  it should "allow you to match strings that look like options" in {
+    val args = Array[String]("hello", "--help", "-h", "--version", "version", "world")
 
     val (options, remaining) = OptionParser.getOptions(args,
       Map(
-        "--color=s"       -> 'color
+        "--help=s"          -> 'man,
+        "-h=s"              -> 'help,
+        "--version=s"       -> 'version
       ))
-    remaining should equal ( Array("hello") )
+    remaining should equal ( Array("hello", "world") )
+    options should not be empty
+    options should equal ( Map( 'man -> "-h",
+                                'version -> "version" ))
+  }
+
+  it should "fail if option with value doesn't have a value" in {
+    val args = Array[String]("hello", "--color")
+    val stream = new java.io.ByteArrayOutputStream()
+    Console.withErr(stream) {
+      val (options, remaining) = OptionParser.getOptions(args,
+        Map(
+          "--color=s"       -> 'color
+        ))
+      remaining should equal ( Array("hello") )
+    }
+    stream.toString should equal ("Option --color requires an argument\n")
   }
 
   it should "Allow passing function arguments instead of symbols" in {
