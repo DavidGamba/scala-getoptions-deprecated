@@ -5,23 +5,48 @@ Scala option parser based on Perl's Getopt::Long.
 
 == Usage
 
+1. Define your command line specification:
++
 [source,scala]
 ----
+def print_version() = () => println("version is 0.2")
+
 def main(args: Array[String]) {
   val (options, remaining) = OptionParser.getOptions(args,
     Map(
-      "-h"              -> print_synopsis(),
-      "--help"          -> print_man(),
-      "--version"       -> print_version(),
       "-f|--flag"       -> 'flag,
-      "--string=s"      -> 'option_with_string_value,
-      "--int=i"         -> 'option_with_int_value,
+      "-s|--string=s"   -> 'string,
+      "-i|--int=i"      -> 'int,
+      "-f|--float=f"    -> 'double,
+      "-p|-procedure=p" -> { () => println("higher order function" }
+      "-h=p"            -> { () => print_synopsis() }
+      "--help|--man=p"  -> { () => launch_manpage() },
+      "--version=p"     -> print_version,
     ))
+----
 
-  if (options isDefinedAt 'flag)
-    do_something()
-  if (options isDefinedAt 'option_with_string_value)
-    do_something_else(options.get('option_with_string_value).getOrElse(""))
+2. Pass cmdline arguments:
++
+----
+$ script hello -f --string=mystring -i 7 --float 3.14 --p --version world -- --nothing
+----
+
+3. It will run the higher order functions that were called on the cmdline:
++
+----
+higher order function
+version is 0.2
+----
+
+4. Internally it will return:
++
+----
+remaining = Array("hello", "world", "--nothing")
+
+options = Map('flag -> true,
+              'string -> "mystring",
+              'int -> 7,
+              'double -> 3.14)
 ----
 
 == Description
@@ -32,7 +57,7 @@ It will take an `Array[String]` and a `Map[String, Any]` and it will return a `M
 
 Arguments::
 1. `Array[String]`.
-2. `Map[String, Any]`, where `Any` can be `Symbol` or a 'method call' or 'function'.
+2. `Map[String, Any]`, where `Any` can be `Symbol`, a 'higher order function' or a 'method to a higher order function'.
 
 Returns::
 1. `Map[Symbol,Any]` where `Any` can be a `String`, `Integer` or `Double` (And eventually `Map` and `Array`, see <<_roadmap>>).
@@ -44,7 +69,7 @@ Returns::
 
 * Multiple definitions for the same option separated by `|`. e.g. `-f|--flag|--longer-version-of-flag`.
 
-* Defining what kind of argument you are passing. Currently supports `=s` to pass strings, `=i` to pass integers and `=f` to pass Double values.
+* Defining what kind of argument you are passing. Currently supports `=s` to pass strings, `=i` to pass integers, `=f` to pass Double values and `=p` to pass higher order functions.
 
 * Supports command line options with `=`. e.g. You can use `--string=mystring` and `--string mystring`.
 
