@@ -18,7 +18,7 @@ def main(args: Array[String]) {
       "-s|--string=s"   -> 'string,
       "-i|--int=i"      -> 'int,
       "-f|--float=f"    -> 'double,
-      "-p|-procedure=p" -> { () => println("higher order function" }
+      "-p|--procedure=p" -> { () => println("higher order function" }
       "-h=p"            -> { () => print_synopsis() }
       "--help|--man=p"  -> { () => launch_manpage() },
       "--version=p"     -> print_version,
@@ -85,22 +85,59 @@ TODO
 
 == Roadmap
 
-* Support bundling
+* Remove `-` and `--` out of the option definition:
+
+  "s|string=s"
++
+instead of:
+
+  "-s|--string=s"
+
+* Support bundling:
 
   -l -a -c  => -lac
 
-* Support passing values after the short option character
+* Support passing values after the short option character:
 
   -i 24  => -i24
 
-* Support array arguments
+* Support array arguments:
 
   --library lib/stdlib --library lib/extlib
-  "--library=s@"
+  "library=s@ -> 'lib"
++
+NOTE: This feature only takes one argument at a time. It is wrong to assume that calling `--library lib/stdlib lib/extlib` would end up with `'lib` equals `Array("lib/stdlib", "lib/extlib")`. For that, Perl defines the experimental repeat specifier `{}`. e.g. `"library=s{2}"`
 
-* Support hash (Map) arguments
+* Support the repeat specifier `{}`:
+
+  "rgbcolor=i{3}"
+  --rgbcolor 255 255 149
+
+* Support hash (Map) arguments:
 
   --define os=linux --define vendor=redhat
-  "--define=s%"
+  "define=s%"
+
+* Support negatable options:
+
+  --noverbose
+  --no-verbose
+  "verbose!"
+
+* Support incremental options:
+
+  -v -v -v
+  "v|verbose+"
+
+* Optional value with `:`:
++
+If you specify `"option:s +->+ 'opt"` for example, you can call that with `--option string` where `'opt` equals `"string"` or with just `--option` where `'opt` equals `""` (empty string).
++
+Additionally for an integer optional value, if the value is not specified the integer is set to `[Int] 0`.
+
+* Lone dash support `-`:
+
+  -
+  "" -> 'lone_dash
 
 * All other Perl's Getopt::Long goodies that seem reasonable to add!
