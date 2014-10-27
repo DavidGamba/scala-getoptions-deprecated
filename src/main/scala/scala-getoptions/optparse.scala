@@ -34,7 +34,7 @@ object OptionParser {
   type OptionMap = Map[Symbol, Any]
   type OptionMapBuilder = Map[String, Any]
 
-  def getOptions(args: Array[String], option_map: OptionMapBuilder): Tuple2[OptionMap, Array[String]] = {
+  def getOptions(args: Array[String], option_map: OptionMapBuilder): (OptionMap, Array[String]) = {
     logger.debug(s"""[getOptions] Received args: ${args.mkString(",")}""")
     logger.debug(s"""[getOptions] Received map:  $option_map""")
     parseOptions(args.toList, option_map)
@@ -105,16 +105,16 @@ object OptionParser {
   private def parseOptions(args: List[String],
                            option_map: OptionMapBuilder,
                            options: OptionMap = Map[Symbol, String](),
-                           skip: Array[String] = Array[String]()): Tuple2[OptionMap, Array[String]] = {
+                           skip: Array[String] = Array[String]()): (OptionMap, Array[String]) = {
     logger.trace(s"""[parseOptions] args:    $args""")
     logger.trace(s"""[parseOptions] options: $options""")
     logger.trace(s"""[parseOptions] skip:    ${skip.mkString(",")}""")
     args match {
       // Empty list
-      case Nil => Tuple2(options, skip)
+      case Nil => (options, skip)
 
       // Stop on --
-      case opt :: tail if opt == "--" => Tuple2(options, skip ++: tail.toArray)
+      case opt :: tail if opt == "--" => (options, skip ++: tail.toArray)
 
       // Options with values after "=". e.g --opt=value
       case opt :: tail if option_map.is_option(opt) &&
