@@ -27,17 +27,47 @@ package com.gambaeng.utils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+object OptionMap {
+  def apply(options_map: Map[Symbol, Any]) = new OptionMap(options_map)
+
+  def apply(kv: (Symbol, Any)*) = new OptionMap(kv.toMap)
+}
+
+class OptionMap(options_map: Map[Symbol, Any]) extends Map[Symbol, Any] {
+
+  def apply[T](name: Symbol) : T = options_map(name).asInstanceOf[T]
+
+  def get[T](name: Symbol) : T = options_map(name).asInstanceOf[T]
+
+  def get(name: Symbol) : Option[Any] = options_map.get(name)
+
+  override def contains(name: Symbol): Boolean = options_map.contains(name)
+
+  def +[B1 >: Any](kv: (Symbol, B1)): OptionMap = OptionMap(options_map + kv)
+
+  def -(key: Symbol): OptionMap = OptionMap(options_map - key)
+
+  def iterator = options_map.iterator
+
+  def toMap = options_map
+}
+
 object OptionParser {
 
   val logger = LoggerFactory.getLogger(this.getClass.getName)
 
-  type OptionMap = Map[Symbol, Any]
+  type OptionMapType = Map[Symbol, Any]
   type OptionMapBuilder = Map[String, Any]
 
-  def getOptions(args: Array[String], option_map: OptionMapBuilder): (OptionMap, Array[String]) = {
+  def getOptions(args: Array[String], option_map: OptionMapBuilder): (OptionMapType, Array[String]) = {
     logger.debug(s"""[getOptions] Received args: ${args.mkString(",")}""")
     logger.debug(s"""[getOptions] Received map:  $option_map""")
     parseOptions(args.toList, option_map)
+  }
+
+  def parse(args: Array[String], option_map: OptionMapBuilder): (OptionMap, Array[String]) = {
+    val (options, remaining) = getOptions(args, option_map)
+    (OptionMap(options), remaining)
   }
 
   implicit class OptionMapImprovements(val m: OptionMapBuilder) {
@@ -104,8 +134,8 @@ object OptionParser {
 
   private def parseOptions(args: List[String],
                            option_map: OptionMapBuilder,
-                           options: OptionMap = Map[Symbol, String](),
-                           skip: Array[String] = Array[String]()): (OptionMap, Array[String]) = {
+                           options: OptionMapType = Map[Symbol, String](),
+                           skip: Array[String] = Array[String]()): (OptionMapType, Array[String]) = {
     logger.trace(s"""[parseOptions] args:    $args""")
     logger.trace(s"""[parseOptions] options: $options""")
     logger.trace(s"""[parseOptions] skip:    ${skip.mkString(",")}""")
